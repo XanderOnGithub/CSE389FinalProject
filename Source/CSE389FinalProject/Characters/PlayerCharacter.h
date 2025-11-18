@@ -84,6 +84,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina|Rate")
     float StaminaRegenRate; // Stamina regenerated per second
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina|Jump")
+    float MinStaminaToJump;
+    
     
     // --- Attributes: Speed ---
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed")
@@ -93,8 +96,9 @@ protected:
     float Speed;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed|Sprint")
-    float SprintSpeedAdditive;  
+    float SprintSpeedAdditive;
 
+    
     // --- Attributes: State ---
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Attributes|State")
     bool bIsSprinting;

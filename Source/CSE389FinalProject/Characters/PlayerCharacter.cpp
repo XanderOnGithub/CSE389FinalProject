@@ -33,6 +33,7 @@ APlayerCharacter::APlayerCharacter()
     StaminaDrainRate = 15.0f;
     StaminaRegenRate = 10.0f;
     SprintSpeedAdditive = 350.0f;
+    MinStaminaToJump = 5.0f;
     
 }
 
@@ -162,10 +163,10 @@ void APlayerCharacter::DoInteract(const FInputActionValue& Value)
 void APlayerCharacter::DoJump(const FInputActionValue& Value)
 {
     bool JumpValue = Value.Get<bool>();
-    if (JumpValue && CanJump() && Stamina >= 10)
+    if (JumpValue && CanJump() && Stamina >= MinStaminaToJump)
     {
        Jump();
-        Stamina -= 10;
+        Stamina -= MinStaminaToJump;
         if (!bIsSprinting)
         {
             StartStaminaRegenTimer();
