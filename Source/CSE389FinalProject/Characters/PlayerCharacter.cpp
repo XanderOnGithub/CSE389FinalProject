@@ -1,6 +1,7 @@
 #include "PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -23,11 +24,25 @@ APlayerCharacter::APlayerCharacter()
     // Create camera
     CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
     CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
-    CameraComponent->bUsePawnControlRotation = false; 
+    CameraComponent->bUsePawnControlRotation = false;
+
+    // Set Player Defaults
+    baseSpeed = 500;
+    baseStamina = 100;
+    baseHealth = 3;
     
 }
 
+void APlayerCharacter::BeginPlay()
+{
+    Super::BeginPlay();
 
+    // Init Player Defaults
+    speed = baseSpeed;
+    GetCharacterMovement()->MaxWalkSpeed = speed;
+    stamina = baseStamina;
+    health = baseHealth;
+}
 
 
 // Called to bind functionality to input
@@ -112,4 +127,16 @@ void APlayerCharacter::DoJump(const FInputActionValue& Value)
     {
        Jump();
     }
+}
+
+void APlayerCharacter::UpdateMovementSpeed(float speedModifier)
+{
+    speed += speedModifier;
+    GetCharacterMovement()->MaxWalkSpeed = speed;
+}
+
+void APlayerCharacter::ResetMovementSpeed()
+{
+    speed = baseSpeed;
+    GetCharacterMovement()->MaxWalkSpeed = speed;
 }

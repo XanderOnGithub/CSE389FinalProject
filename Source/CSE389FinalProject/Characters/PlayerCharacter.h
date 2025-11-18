@@ -21,6 +21,9 @@ public:
 
 protected:
 
+	virtual void BeginPlay() override;
+
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
 	class UInputMappingContext* InputMapping;
 
@@ -49,7 +52,30 @@ protected:
 
 	void DoJump(const FInputActionValue& Value);
 
-    
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
+	int health;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
+	int baseHealth;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina")
+	float stamina;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina")
+	float baseStamina;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed")
+	float speed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed")
+	float baseSpeed;
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void UpdateMovementSpeed(float speedModifier);
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void ResetMovementSpeed();
+	
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -59,3 +85,4 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
 	UCameraComponent* CameraComponent;
 };
+
