@@ -16,9 +16,9 @@ APlayerCharacter::APlayerCharacter()
     SpringArmComponent->SetupAttachment(GetRootComponent());
     SpringArmComponent->TargetArmLength = 0.0f;
     SpringArmComponent->bUsePawnControlRotation = true; 
-    SpringArmComponent->bInheritPitch = false;
-    SpringArmComponent->bInheritRoll = false;
-    SpringArmComponent->bInheritYaw = false;
+    SpringArmComponent->bInheritPitch = true;
+    SpringArmComponent->bInheritRoll = true;
+    SpringArmComponent->bInheritYaw = true;
 
     // Create camera
     CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
