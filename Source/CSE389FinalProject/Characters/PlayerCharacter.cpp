@@ -27,9 +27,12 @@ APlayerCharacter::APlayerCharacter()
     CameraComponent->bUsePawnControlRotation = false;
 
     // Set Player Defaults
-    baseSpeed = 500;
-    baseStamina = 100;
-    baseHealth = 3;
+    BaseSpeed = 500;
+    BaseStamina = 100;
+    BaseHealth = 3;
+    StaminaDrainRate = 15.0f;
+    StaminaRegenRate = 10.0f;
+    SprintSpeedAdditive = 350.0f;
     
 }
 
@@ -38,10 +41,10 @@ void APlayerCharacter::BeginPlay()
     Super::BeginPlay();
 
     // Init Player Defaults
-    speed = baseSpeed;
-    GetCharacterMovement()->MaxWalkSpeed = speed;
-    stamina = baseStamina;
-    health = baseHealth;
+    Speed = BaseSpeed;
+    GetCharacterMovement()->MaxWalkSpeed = Speed;
+    Stamina = BaseStamina;
+    Health = BaseHealth;
 }
 
 
@@ -84,6 +87,16 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
     // Take Movement Value
     FVector2D MovementVector = Value.Get<FVector2D>();
 
+    if (MovementVector.X != 0.0f || MovementVector.Y != 0.0f)
+    {
+        if (bIsSprinting)
+        {
+            StopStaminaRegenTimer();
+            StartStaminaDrainTimer();
+        }
+    }
+    
+    
     if (MovementVector.X != 0)
     {
        AddMovementInput(GetActorRightVector(), MovementVector.X);
@@ -112,7 +125,33 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 
 void APlayerCharacter::Sprint(const FInputActionValue& Value)
 {
-    UE_LOG(LogTemp, Display, TEXT("sprint"));
+
+    bool sprintValue = Value.Get<bool>();
+
+    // If Key is Down
+    if (sprintValue)
+    {
+        if (Stamina > 0)
+        {
+            bIsSprinting = true;
+            UpdateMovementSpeed(SprintSpeedAdditive);
+            StopStaminaRegenTimer();
+            StartStaminaDrainTimer();
+        }
+    }
+
+    // If Key is up
+    else
+    {
+        if (bIsSprinting)
+        {
+            bIsSprinting = false;
+            ResetMovementSpeed();
+
+            StopStaminaDrainTimer();
+            StartStaminaRegenTimer();
+        }
+    }
 }
 
 void APlayerCharacter::DoInteract(const FInputActionValue& Value)
@@ -123,20 +162,102 @@ void APlayerCharacter::DoInteract(const FInputActionValue& Value)
 void APlayerCharacter::DoJump(const FInputActionValue& Value)
 {
     bool JumpValue = Value.Get<bool>();
-    if (JumpValue && CanJump())
+    if (JumpValue && CanJump() && Stamina >= 10)
     {
        Jump();
+        Stamina -= 10;
+        if (!bIsSprinting)
+        {
+            StartStaminaRegenTimer();
+        }
+        
     }
 }
 
-void APlayerCharacter::UpdateMovementSpeed(float speedModifier)
+void APlayerCharacter::UpdateMovementSpeed(float speedAdditive)
 {
-    speed += speedModifier;
-    GetCharacterMovement()->MaxWalkSpeed = speed;
+    Speed += speedAdditive;
+    GetCharacterMovement()->MaxWalkSpeed = Speed;
 }
 
 void APlayerCharacter::ResetMovementSpeed()
 {
-    speed = baseSpeed;
-    GetCharacterMovement()->MaxWalkSpeed = speed;
+    Speed = BaseSpeed;
+    GetCharacterMovement()->MaxWalkSpeed = Speed;
+}
+
+void APlayerCharacter::StartStaminaDrainTimer()
+{
+    
+    if (!GetWorldTimerManager().IsTimerActive(StaminaDrainTimerHandle))
+    {
+        GetWorldTimerManager().SetTimer(
+            StaminaDrainTimerHandle,
+            this,
+            &APlayerCharacter::UpdateStaminaDrain,
+            0.1f,
+            true
+        );
+    }    
+}
+
+void APlayerCharacter::StopStaminaDrainTimer()
+{
+    GetWorldTimerManager().ClearTimer(StaminaDrainTimerHandle);
+}
+
+void APlayerCharacter::StartStaminaRegenTimer()
+{
+    if (!bIsSprinting && !GetWorldTimerManager().IsTimerActive(StaminaRegenTimerHandle))
+    {
+        GetWorldTimerManager().SetTimer(
+            StaminaRegenTimerHandle,
+            this,
+            &APlayerCharacter::UpdateStaminaRegen,
+            0.1f,
+            true
+        );
+    }
+}
+
+void APlayerCharacter::StopStaminaRegenTimer()
+{
+    GetWorldTimerManager().ClearTimer(StaminaRegenTimerHandle);
+}
+
+void APlayerCharacter::UpdateStaminaDrain()
+{
+
+    if (GetVelocity().Length() <= 0)
+    {
+        StopStaminaDrainTimer();
+        StartStaminaRegenTimer();
+
+        return;
+    }
+    
+    float DrainAmount = StaminaDrainRate * 0.1f;
+    Stamina -= DrainAmount;
+    if (Stamina <= 0.0f)
+    {
+        Stamina = 0.0f;
+        if (bIsSprinting)
+        {
+            bIsSprinting = false;
+            ResetMovementSpeed();
+        }
+        StopStaminaDrainTimer();
+        StartStaminaRegenTimer();
+    }
+}
+
+void APlayerCharacter::UpdateStaminaRegen()
+{
+    float RegenAmount = StaminaRegenRate * 0.1f;
+    Stamina += RegenAmount;
+    if (Stamina >= BaseStamina)
+    {
+        Stamina = BaseStamina;
+        StopStaminaRegenTimer();
+    }
 }
