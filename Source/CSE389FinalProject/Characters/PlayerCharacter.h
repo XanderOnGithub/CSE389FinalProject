@@ -113,6 +113,10 @@ protected:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
     bool bIsSprinting;
 
+    // Money variable
+    int Money;
+
+
 #pragma endregion
 
 #pragma region Mechanics
@@ -142,6 +146,10 @@ protected:
     // Timers
     FTimerHandle StaminaDrainTimerHandle;
     FTimerHandle StaminaRegenTimerHandle;
+
+    // Get/Set Money
+    int GetMoney();
+    void SetMoney(int change);
 
 #pragma endregion
 };

@@ -47,6 +47,8 @@ APlayerCharacter::APlayerCharacter()
 
     // Initialize State
     bIsSprinting = false;
+
+    Money = 350;
 }
 
 void APlayerCharacter::BeginPlay()
@@ -292,4 +294,14 @@ void APlayerCharacter::UpdateStaminaRegen()
         Stamina = BaseStamina;
         StopStaminaRegenTimer();
     }
+}
+
+int APlayerCharacter::GetMoney()
+{
+    return Money;
+}
+
+void APlayerCharacter::SetMoney(int change)
+{
+    Money = Money + change;
 }
