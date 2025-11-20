@@ -86,7 +86,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         if (InputMove)      InputComp->BindAction(InputMove, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
         if (InputLook)      InputComp->BindAction(InputLook, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
         if (InputSprint)    InputComp->BindAction(InputSprint, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
-        if (InputInteract)  InputComp->BindAction(InputInteract, ETriggerEvent::Triggered, this, &APlayerCharacter::DoInteract);
+        if (InputInteract)  InputComp->BindAction(InputInteract, ETriggerEvent::Started, this, &APlayerCharacter::DoInteract);
         if (InputJump)      InputComp->BindAction(InputJump, ETriggerEvent::Triggered, this, &APlayerCharacter::DoJump);
     }
 }
@@ -163,11 +163,6 @@ void APlayerCharacter::Sprint(const FInputActionValue& Value)
             StartStaminaRegenTimer();
         }
     }
-}
-
-void APlayerCharacter::DoInteract(const FInputActionValue& Value)
-{
-    UE_LOG(LogTemp, Log, TEXT("Player Interaction Triggered"));
 }
 
 void APlayerCharacter::DoPush(const FInputActionValue& Value)
@@ -305,3 +300,4 @@ void APlayerCharacter::SetMoney(int change)
 {
     Money = Money + change;
 }
+

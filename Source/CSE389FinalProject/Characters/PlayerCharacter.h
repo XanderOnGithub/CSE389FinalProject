@@ -62,9 +62,14 @@ protected:
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void Sprint(const FInputActionValue& Value);
-    void DoInteract(const FInputActionValue& Value);
     void DoJump(const FInputActionValue& Value);
     void DoPush(const FInputActionValue& Value);
+
+    // Implementing Interaction in BPs (It will be a lot easier)
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interact")
+    void DoInteract(const FInputActionValue& Value);
+    
+
 
 #pragma endregion
 
@@ -101,28 +106,45 @@ protected:
 
 protected:
     // Current Values
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     int32 Health;
 
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     float Stamina;
 
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     float Speed;
 
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     bool bIsSprinting;
 
     // Money variable
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     int Money;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    AActor* InteractedActor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    float InteractDistance = 2000.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    float InteractRadius = 5.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+    bool bShowTraceDebug = true;
 
 #pragma endregion
 
 #pragma region Mechanics
 
 protected:
+
+
+    // --- Money ---
+    int GetMoney();
+    void SetMoney(int change);
+    
     UFUNCTION(BlueprintCallable, Category = "Character|Movement")
     void UpdateMovementSpeed(float SpeedAdditive);
 
@@ -134,7 +156,6 @@ protected:
     void StartStaminaDrainTimer();
     void StopStaminaDrainTimer();
     
-    // UFUNCTION ensures safe binding for timers
     UFUNCTION() 
     void UpdateStaminaDrain();
 
@@ -148,9 +169,9 @@ protected:
     FTimerHandle StaminaDrainTimerHandle;
     FTimerHandle StaminaRegenTimerHandle;
 
-    // Get/Set Money
-    int GetMoney();
-    void SetMoney(int change);
+
+
+    
 
 #pragma endregion
 };
