@@ -114,6 +114,7 @@ protected:
     bool bIsSprinting;
 
     // Money variable
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
     int Money;
 
 
