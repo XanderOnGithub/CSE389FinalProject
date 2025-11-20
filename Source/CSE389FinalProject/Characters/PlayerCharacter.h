@@ -1,19 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "BaseCharacter.h"
 #include "InputActionValue.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "PlayerCharacter.generated.h"
 
+// Forward Declarations
 class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
-struct FTimerHandle;
 
 UCLASS()
 class CSE389FINALPROJECT_API APlayerCharacter : public ABaseCharacter
@@ -23,104 +19,129 @@ class CSE389FINALPROJECT_API APlayerCharacter : public ABaseCharacter
 public:
     APlayerCharacter();
 
-    // --- Core Overrides ---
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-    
-protected:
     virtual void BeginPlay() override;
 
-    // --- Components ---
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components")
+#pragma region Components
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|Components")
     USpringArmComponent* SpringArmComponent;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|Components")
     UCameraComponent* CameraComponent;
 
-    // --- Enhanced Input Configuration ---
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+#pragma endregion
+
+#pragma region Input
+
+protected:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputMappingContext* InputMapping;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputMove;
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputLook;
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputSprint;   
     
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputJump;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enhanced Input")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputInteract;
 
-    // --- Input Handlers ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
+    UInputAction* InputPush;
+
+    // Input Handler Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void Sprint(const FInputActionValue& Value);
     void DoInteract(const FInputActionValue& Value);
     void DoJump(const FInputActionValue& Value);
+    void DoPush(const FInputActionValue& Value);
 
-    // --- Attributes: Health ---
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
-    int BaseHealth;
+#pragma endregion
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Health")
-    int Health;
+#pragma region Attributes
 
-    // --- Attributes: Stamina ---
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina")
+protected:
+    // --- Health ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Health")
+    int32 BaseHealth;
+
+    // --- Stamina Config ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Stamina")
     float BaseStamina;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina")
-    float Stamina;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Stamina")
+    float StaminaDrainRate; // Per second
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina|Rate")
-    float StaminaDrainRate; // Stamina drained per second
-    
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina|Rate")
-    float StaminaRegenRate; // Stamina regenerated per second
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Stamina")
+    float StaminaRegenRate; // Per second
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Stamina|Jump")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Stamina")
     float MinStaminaToJump;
-    
-    
-    // --- Attributes: Speed ---
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed")
+
+    // --- Movement Config ---
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
     float BaseSpeed;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed")
-    float Speed;
-
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes|Speed|Sprint")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Movement")
     float SprintSpeedAdditive;
 
-    
-    // --- Attributes: State ---
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Attributes|State")
+#pragma endregion
+
+#pragma region State
+
+protected:
+    // Current Values
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    int32 Health;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    float Stamina;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
+    float Speed;
+
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Character|State")
     bool bIsSprinting;
 
-    // --- Gameplay Functions ---
-    UFUNCTION(BlueprintCallable, Category = "Movement")
+#pragma endregion
+
+#pragma region Mechanics
+
+protected:
+    UFUNCTION(BlueprintCallable, Category = "Character|Movement")
     void UpdateMovementSpeed(float SpeedAdditive);
 
-    UFUNCTION(BlueprintCallable, Category = "Movement")
+    UFUNCTION(BlueprintCallable, Category = "Character|Movement")
     void ResetMovementSpeed();
+
+    // --- Stamina System Internals ---
     
-    // --- Stamina Functions ---
     void StartStaminaDrainTimer();
     void StopStaminaDrainTimer();
+    
+    // UFUNCTION ensures safe binding for timers
+    UFUNCTION() 
     void UpdateStaminaDrain();
 
     void StartStaminaRegenTimer();
     void StopStaminaRegenTimer();
+    
+    UFUNCTION()
     void UpdateStaminaRegen();
 
-    // --- Timers ---
+    // Timers
     FTimerHandle StaminaDrainTimerHandle;
     FTimerHandle StaminaRegenTimerHandle;
-    
+
+#pragma endregion
 };

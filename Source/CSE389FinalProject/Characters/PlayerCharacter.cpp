@@ -1,111 +1,118 @@
 #include "PlayerCharacter.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
+
+// Engine Includes
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/InputComponent.h"
+#include "GameFramework/Controller.h"
+#include "TimerManager.h"
+
+// Enhanced Input Includes
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
 
 APlayerCharacter::APlayerCharacter()
 {
-
-    // Default Tick Stuff
+    // --- Default Tick Stuff ---
     PrimaryActorTick.bCanEverTick = true;
 
-    // Allow FPS Turning
+    // --- Rotation Defaults ---
     bUseControllerRotationYaw = true;
-    
-    // Create spring arm
+
+    // --- Create Components ---
     SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
     SpringArmComponent->SetupAttachment(GetRootComponent());
     SpringArmComponent->TargetArmLength = 0.0f;
-    SpringArmComponent->bUsePawnControlRotation = true; 
+    SpringArmComponent->bUsePawnControlRotation = true;
     SpringArmComponent->bInheritPitch = true;
     SpringArmComponent->bInheritRoll = true;
     SpringArmComponent->bInheritYaw = true;
 
-    // Create camera
     CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
     CameraComponent->SetupAttachment(SpringArmComponent, USpringArmComponent::SocketName);
     CameraComponent->bUsePawnControlRotation = false;
 
-    // Set Player Defaults
-    BaseSpeed = 500;
-    BaseStamina = 100;
+    // --- Initialize Attribute Defaults ---
+    BaseSpeed = 500.0f;
+    SprintSpeedAdditive = 350.0f;
+    
     BaseHealth = 3;
+    
+    BaseStamina = 100.0f;
     StaminaDrainRate = 15.0f;
     StaminaRegenRate = 10.0f;
-    SprintSpeedAdditive = 350.0f;
-    MinStaminaToJump = 5.0f;
-    
+    MinStaminaToJump = 10.0f; 
+
+    // Initialize State
+    bIsSprinting = false;
 }
 
 void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Init Player Defaults
     Speed = BaseSpeed;
-    GetCharacterMovement()->MaxWalkSpeed = Speed;
     Stamina = BaseStamina;
     Health = BaseHealth;
+
+    if (UCharacterMovementComponent* CMC = GetCharacterMovement())
+    {
+        CMC->MaxWalkSpeed = Speed;
+    }
+
+    if (APlayerController* PC = Cast<APlayerController>(Controller))
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+        {
+            if (InputMapping)
+            {
+                Subsystem->ClearAllMappings();
+                Subsystem->AddMappingContext(InputMapping, 0);
+            }
+        }
+    }
 }
 
-
-// Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    APlayerController* PC = Cast<APlayerController>(GetController());
-
-    if (PC)
+    if (UEnhancedInputComponent* InputComp = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
-        if (Subsystem)
-        {
-            Subsystem->ClearAllMappings();
-            Subsystem->AddMappingContext(InputMapping, 0);
-        }
-    }
-
-    UEnhancedInputComponent* InputComp = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-    
-    if (InputComp)
-    {
-        InputComp->BindAction(InputMove, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
-        InputComp->BindAction(InputLook, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-        InputComp->BindAction(InputSprint, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
-        InputComp->BindAction(InputInteract, ETriggerEvent::Triggered, this, &APlayerCharacter::DoInteract);
-        InputComp->BindAction(InputJump, ETriggerEvent::Triggered, this, &APlayerCharacter::DoJump);
+        if (InputMove)      InputComp->BindAction(InputMove, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+        if (InputLook)      InputComp->BindAction(InputLook, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+        if (InputSprint)    InputComp->BindAction(InputSprint, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
+        if (InputInteract)  InputComp->BindAction(InputInteract, ETriggerEvent::Triggered, this, &APlayerCharacter::DoInteract);
+        if (InputJump)      InputComp->BindAction(InputJump, ETriggerEvent::Triggered, this, &APlayerCharacter::DoJump);
     }
 }
 
-/**
- * Character Actions
- * Including: Move, Look, Jump, Sprint, Interact
- */
-
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-    // Take Movement Value
     FVector2D MovementVector = Value.Get<FVector2D>();
 
-    if (MovementVector.X != 0.0f || MovementVector.Y != 0.0f)
+    if (Controller != nullptr)
     {
-        if (bIsSprinting)
+        const FRotator Rotation = Controller->GetControlRotation();
+        const FRotator YawRotation(0, Rotation.Yaw, 0);
+        
+        if (MovementVector.Y != 0.0f)
+        {
+            AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+        }
+        
+        if (MovementVector.X != 0.0f)
+        {
+            AddMovementInput(GetActorRightVector(), MovementVector.X);
+        }
+
+        if ((MovementVector.X != 0.0f || MovementVector.Y != 0.0f) && bIsSprinting)
         {
             StopStaminaRegenTimer();
             StartStaminaDrainTimer();
         }
-    }
-    
-    
-    if (MovementVector.X != 0)
-    {
-       AddMovementInput(GetActorRightVector(), MovementVector.X);
-    }
-
-    if (MovementVector.Y != 0)
-    {
-       AddMovementInput(GetActorForwardVector(), MovementVector.Y);
     }
 }
 
@@ -113,37 +120,38 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 {
     FVector2D LookDirection = Value.Get<FVector2D>();
 
-    if (LookDirection.X != 0)
+    if (Controller != nullptr)
     {
-       AddControllerYawInput(LookDirection.X);
-    }
+        if (LookDirection.X != 0.0f)
+        {
+            AddControllerYawInput(LookDirection.X);
+        }
 
-    if (LookDirection.Y != 0)
-    {
-       AddControllerPitchInput(LookDirection.Y);
+        if (LookDirection.Y != 0.0f)
+        {
+            AddControllerPitchInput(LookDirection.Y);
+        }
     }
 }
 
 void APlayerCharacter::Sprint(const FInputActionValue& Value)
 {
+    const bool bSprintInput = Value.Get<bool>();
 
-    bool sprintValue = Value.Get<bool>();
-
-    // If Key is Down
-    if (sprintValue)
+    if (bSprintInput)
     {
-        if (Stamina > 0)
+        if (Stamina > 0.0f && !bIsSprinting)
         {
             bIsSprinting = true;
             UpdateMovementSpeed(SprintSpeedAdditive);
+            
             StopStaminaRegenTimer();
             StartStaminaDrainTimer();
         }
     }
-
-    // If Key is up
     else
     {
+        // Stop Sprinting
         if (bIsSprinting)
         {
             bIsSprinting = false;
@@ -157,96 +165,111 @@ void APlayerCharacter::Sprint(const FInputActionValue& Value)
 
 void APlayerCharacter::DoInteract(const FInputActionValue& Value)
 {
-    UE_LOG(LogTemp, Display, TEXT("DoInteract"));
+    UE_LOG(LogTemp, Log, TEXT("Player Interaction Triggered"));
+}
+
+void APlayerCharacter::DoPush(const FInputActionValue& Value)
+{
+    UE_LOG(LogTemp, Log, TEXT("Player Push Triggered"));
 }
 
 void APlayerCharacter::DoJump(const FInputActionValue& Value)
 {
-    bool JumpValue = Value.Get<bool>();
-    if (JumpValue && CanJump() && Stamina >= MinStaminaToJump)
+    if (CanJump() && Stamina >= MinStaminaToJump)
     {
-       Jump();
-        Stamina -= MinStaminaToJump;
+        Jump();
+
+        Stamina = FMath::Max(0.0f, Stamina - MinStaminaToJump);
+        
+        StopStaminaRegenTimer();
+        
         if (!bIsSprinting)
         {
-            StartStaminaRegenTimer();
+             StartStaminaRegenTimer(); 
         }
-        
     }
 }
 
-void APlayerCharacter::UpdateMovementSpeed(float speedAdditive)
+void APlayerCharacter::UpdateMovementSpeed(float SpeedAdditive)
 {
-    Speed += speedAdditive;
-    GetCharacterMovement()->MaxWalkSpeed = Speed;
+    Speed = BaseSpeed + SpeedAdditive;
+    if (UCharacterMovementComponent* CMC = GetCharacterMovement())
+    {
+        CMC->MaxWalkSpeed = Speed;
+    }
 }
 
 void APlayerCharacter::ResetMovementSpeed()
 {
     Speed = BaseSpeed;
-    GetCharacterMovement()->MaxWalkSpeed = Speed;
+    if (UCharacterMovementComponent* CMC = GetCharacterMovement())
+    {
+        CMC->MaxWalkSpeed = Speed;
+    }
 }
+
+// --- Stamina Timers ---
 
 void APlayerCharacter::StartStaminaDrainTimer()
 {
-    
-    if (!GetWorldTimerManager().IsTimerActive(StaminaDrainTimerHandle))
+    if (!GetWorld()->GetTimerManager().IsTimerActive(StaminaDrainTimerHandle))
     {
-        GetWorldTimerManager().SetTimer(
+        GetWorld()->GetTimerManager().SetTimer(
             StaminaDrainTimerHandle,
             this,
             &APlayerCharacter::UpdateStaminaDrain,
             0.1f,
-            true
+            true // Loop
         );
-    }    
+    }
 }
 
 void APlayerCharacter::StopStaminaDrainTimer()
 {
-    GetWorldTimerManager().ClearTimer(StaminaDrainTimerHandle);
+    GetWorld()->GetTimerManager().ClearTimer(StaminaDrainTimerHandle);
 }
 
 void APlayerCharacter::StartStaminaRegenTimer()
 {
-    if (!bIsSprinting && !GetWorldTimerManager().IsTimerActive(StaminaRegenTimerHandle))
+    if (!bIsSprinting && !GetWorld()->GetTimerManager().IsTimerActive(StaminaRegenTimerHandle))
     {
-        GetWorldTimerManager().SetTimer(
+        GetWorld()->GetTimerManager().SetTimer(
             StaminaRegenTimerHandle,
             this,
             &APlayerCharacter::UpdateStaminaRegen,
             0.1f,
-            true
+            true // Loop
         );
     }
 }
 
 void APlayerCharacter::StopStaminaRegenTimer()
 {
-    GetWorldTimerManager().ClearTimer(StaminaRegenTimerHandle);
+    GetWorld()->GetTimerManager().ClearTimer(StaminaRegenTimerHandle);
 }
 
 void APlayerCharacter::UpdateStaminaDrain()
 {
-
-    if (GetVelocity().Length() <= 0)
+    if (GetVelocity().IsNearlyZero())
     {
-        StopStaminaDrainTimer();
-        StartStaminaRegenTimer();
-
         return;
     }
-    
-    float DrainAmount = StaminaDrainRate * 0.1f;
-    Stamina -= DrainAmount;
+
+    const float DrainAmount = StaminaDrainRate * 0.1f;
+    Stamina = FMath::Max(0.0f, Stamina - DrainAmount);
+
     if (Stamina <= 0.0f)
     {
+        // Stamina Empty
         Stamina = 0.0f;
+        
+        // Force stop sprint
         if (bIsSprinting)
         {
             bIsSprinting = false;
             ResetMovementSpeed();
         }
+        
         StopStaminaDrainTimer();
         StartStaminaRegenTimer();
     }
@@ -254,8 +277,16 @@ void APlayerCharacter::UpdateStaminaDrain()
 
 void APlayerCharacter::UpdateStaminaRegen()
 {
-    float RegenAmount = StaminaRegenRate * 0.1f;
-    Stamina += RegenAmount;
+    // Don't regen if we are supposed to be sprinting
+    if (bIsSprinting) 
+    {
+        StopStaminaRegenTimer();
+        return;
+    }
+
+    const float RegenAmount = StaminaRegenRate * 0.1f;
+    Stamina = FMath::Min(BaseStamina, Stamina + RegenAmount);
+
     if (Stamina >= BaseStamina)
     {
         Stamina = BaseStamina;
