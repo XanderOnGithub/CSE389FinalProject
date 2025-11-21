@@ -121,6 +121,9 @@ protected:
     // Money variable
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
     int Money;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|State")
+    int Collectables;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
     AActor* InteractedActor;
@@ -133,6 +136,8 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
     bool bShowTraceDebug = true;
+    
+    
 
 #pragma endregion
 
@@ -144,6 +149,11 @@ protected:
     // --- Money ---
     int GetMoney();
     void SetMoney(int change);
+    
+    int GetCollectables();
+    
+        UFUNCTION(BlueprintCallable, Category="Collectables")
+        void AddCollectable();
     
     UFUNCTION(BlueprintCallable, Category = "Character|Movement")
     void UpdateMovementSpeed(float SpeedAdditive);

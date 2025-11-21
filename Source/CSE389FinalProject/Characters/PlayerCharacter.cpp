@@ -49,6 +49,7 @@ APlayerCharacter::APlayerCharacter()
     bIsSprinting = false;
 
     Money = 350;
+    Collectables = 0;
 }
 
 void APlayerCharacter::BeginPlay()
@@ -299,5 +300,15 @@ int APlayerCharacter::GetMoney()
 void APlayerCharacter::SetMoney(int change)
 {
     Money = Money + change;
+}
+
+int APlayerCharacter::GetCollectables()
+{
+    return Collectables;
+}
+
+void APlayerCharacter::AddCollectable()
+{
+    Collectables += 1;
 }
 
