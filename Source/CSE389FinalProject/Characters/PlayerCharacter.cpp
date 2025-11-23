@@ -88,6 +88,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         if (InputLook)      InputComp->BindAction(InputLook, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
         if (InputSprint)    InputComp->BindAction(InputSprint, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
         if (InputInteract)  InputComp->BindAction(InputInteract, ETriggerEvent::Started, this, &APlayerCharacter::DoInteract);
+        if (InputPush)  InputComp->BindAction(InputPush, ETriggerEvent::Started, this, &APlayerCharacter::DoPush);
         if (InputJump)      InputComp->BindAction(InputJump, ETriggerEvent::Triggered, this, &APlayerCharacter::DoJump);
     }
 }
@@ -121,18 +122,18 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
-    FVector2D LookDirection = Value.Get<FVector2D>();
+    LookVector = Value.Get<FVector2D>();
 
     if (Controller != nullptr)
     {
-        if (LookDirection.X != 0.0f)
+        if (LookVector.X != 0.0f)
         {
-            AddControllerYawInput(LookDirection.X);
+            AddControllerYawInput(LookVector.X);
         }
 
-        if (LookDirection.Y != 0.0f)
+        if (LookVector.Y != 0.0f)
         {
-            AddControllerPitchInput(LookDirection.Y);
+            AddControllerPitchInput(LookVector.Y);
         }
     }
 }
@@ -164,11 +165,6 @@ void APlayerCharacter::Sprint(const FInputActionValue& Value)
             StartStaminaRegenTimer();
         }
     }
-}
-
-void APlayerCharacter::DoPush(const FInputActionValue& Value)
-{
-    UE_LOG(LogTemp, Log, TEXT("Player Push Triggered"));
 }
 
 void APlayerCharacter::DoJump(const FInputActionValue& Value)

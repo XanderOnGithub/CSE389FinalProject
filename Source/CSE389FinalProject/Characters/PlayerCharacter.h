@@ -57,18 +57,24 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input")
     UInputAction* InputPush;
+    
+    
 
     // Input Handler Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void Sprint(const FInputActionValue& Value);
     void DoJump(const FInputActionValue& Value);
-    void DoPush(const FInputActionValue& Value);
 
     // Implementing Interaction in BPs (It will be a lot easier)
     UFUNCTION(BlueprintImplementableEvent, Category = "Interact")
     void DoInteract(const FInputActionValue& Value);
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "Interact")
+    void DoPush(const FInputActionValue& Value);
     
+    UPROPERTY(BlueprintReadOnly, Category = "Character|Input")
+    FVector2D LookVector;
 
 
 #pragma endregion
