@@ -60,6 +60,17 @@ void APlayerCharacter::BeginPlay()
     Stamina = BaseStamina;
     Health = BaseHealth;
 
+
+    if (OnMoneyChanged.IsBound())
+    {
+        OnMoneyChanged.Broadcast(Money);
+    }
+    
+    if (OnCollectablesChanged.IsBound())
+    {
+        OnCollectablesChanged.Broadcast(Collectables);
+    }
+
     if (UCharacterMovementComponent* CMC = GetCharacterMovement())
     {
         CMC->MaxWalkSpeed = Speed;
@@ -296,6 +307,11 @@ int APlayerCharacter::GetMoney()
 void APlayerCharacter::SetMoney(int change)
 {
     Money = Money + change;
+
+    if (OnMoneyChanged.IsBound())
+    {
+        OnMoneyChanged.Broadcast(Money);
+    }
 }
 
 int APlayerCharacter::GetCollectables()
@@ -306,5 +322,11 @@ int APlayerCharacter::GetCollectables()
 void APlayerCharacter::AddCollectable()
 {
     Collectables += 1;
+
+    if (OnCollectablesChanged.IsBound())
+    {
+        OnCollectablesChanged.Broadcast(Collectables);
+    }
+    
 }
 

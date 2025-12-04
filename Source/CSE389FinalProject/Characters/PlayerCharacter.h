@@ -5,6 +5,10 @@
 #include "InputActionValue.h"
 #include "PlayerCharacter.generated.h"
 
+// Delegate for Collectable Changed
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCollectablesChanged, int32, NewAmount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyChanged, int32, NewAmount);
+
 // Forward Declarations
 class UInputMappingContext;
 class UInputAction;
@@ -21,6 +25,14 @@ public:
 
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+    // Delegate Events
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnCollectablesChanged OnCollectablesChanged;
+
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnMoneyChanged OnMoneyChanged;
+    
+    
 protected:
     virtual void BeginPlay() override;
 
