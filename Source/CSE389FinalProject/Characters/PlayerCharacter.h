@@ -137,7 +137,7 @@ protected:
     bool bIsSprinting;
 
     // Money variable
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character|State")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|State")
     int Money;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|State")
